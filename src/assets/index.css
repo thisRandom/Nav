@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+    --dot-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+    --dot-color: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    @apply transition-colors duration-500;
+    /* 极简点阵背景 */
+    background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+/* 搜索框内阴影，增加深度感 */
+.search-inset {
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+.dark .search-inset {
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
