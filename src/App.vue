@@ -7,23 +7,46 @@ import BookmarkManager from "./components/BookmarkManager.vue";
 import NetworkMonitor from "./components/NetworkMonitor.vue";
 import StatusPanel from "./components/StatusPanel.vue";
 import WeatherPanel from "./components/WeatherPanel.vue";
+import { defaultServices } from './data/services';
 
 
-const intranetServices = [
-  { name: 'iStoreOS', icon: 'simple-icons:openwrt', url: 'http://192.168.100.1', type: 'link', desc: '路由管理' },
-  { name: 'CPE 终端', icon: 'material-symbols:cell-tower', url: 'http://192.168.1.1', type: 'link', desc: '网络管理' },
-  { name: 'Gitea', icon: 'simple-icons:gitea', url: 'http://192.168.100.1:3001', type: 'link', desc: '代码托管' },
-  { name: '文件管理', icon: 'ph:folder-open-duotone', url: 'http://192.168.100.1:8897', type: 'link', desc: '' },
-  { name: 'Immich', icon: 'simple-icons:immich', url: 'http://192.168.100.1:2283', type: 'link', desc: '私人照片云' },
-  { name: 'Aria2', icon: 'material-symbols:download-rounded', url: 'http://192.168.100.1/ariang/#!/downloading', type: 'link', desc: '远程下载' },
-  { name: 'Navidrome', icon: 'ph:music-notes-duotone', url: 'http://192.168.100.1:4533', type: 'link', desc: '音乐云盘' },
-  { name: 'Nikki', icon: 'material-symbols:vpn-lock-rounded', url: 'https://192.168.100.1:9443/ui/?host=192.168.100.1&hostname=192.168.100.1&port=9443&secret=269896#/proxies', type: 'link', desc: '代理服务' },
-  { name: 'Docker', icon: 'bxl:docker', url: 'http://192.168.100.1:8807/dpanel/ui/home/overview', type: 'link', desc: 'Compose 管理器'},
-  { name: 'MySQL', icon: 'logos:mysql', value: '3306', type: 'info', desc: '开发数据库' },
-  { name: 'Redis', icon: 'logos:redis', value: '6379', type: 'info', desc: '缓存服务' },
-  { name: 'Ubuntu', icon: 'logos:ubuntu', value: 'ssh root@192.168.100.1:2022', type: 'copy', desc: '核心服务器' },
+// 2. 定义统一的响应式状态
+const navData = ref({
+  services: [],
+  bookmarks: {}
+});
 
-];
+onMounted(() => {
+  const STORAGE_KEY = 'lantech_nav_storage';
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (saved) {
+    try {
+      // 如果本地有缓存，加载缓存
+      navData.value = JSON.parse(saved);
+    } catch (e) {
+      console.error("缓存解析失败，重置为默认值");
+      initDefault();
+    }
+  } else {
+    // 没有任何缓存，加载默认文件里的数据
+    initDefault();
+  }
+});
+
+// 初始化函数
+const initDefault = () => {
+  navData.value = {
+    services: defaultServices,
+    bookmarks: defaultBookmarks
+  };
+};
+
+// 3. 开启持久化监听
+watch(navData, (newVal) => {
+  localStorage.setItem('lantech_nav_storage', JSON.stringify(newVal));
+}, { deep: true });
+
 
 // 1. 响应式变量
 const wallpapers = ref([]); // 初始为空，由后端填充
@@ -105,7 +128,7 @@ onMounted(() => {
 
       <div class="w-full mb-10">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          <ServiceCard v-for="service in intranetServices" :key="service.name" :item="service" />
+          <ServiceCard v-for="service in defaultServices" :key="service.name" :item="service" />
         </div>
       </div>
 
