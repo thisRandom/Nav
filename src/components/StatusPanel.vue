@@ -1,29 +1,75 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+// JS 逻辑保持不变...
+import {ref, onMounted, onUnmounted} from 'vue';
 
 const currentTime = ref('');
 const currentDate = ref('');
-const hitokoto = ref('正在加载...');
+const hitokoto = ref('');
 const isRefreshing = ref(false);
+
+const localQuotes = [
+  // --- 计算机与极客哲学 ---
+  "世界是复杂的，代码应该是简单的。",
+  "程序会过时，思维不会。",
+  "写代码，也是在写自己。",
+  "每一次重构，都是一次进化。",
+  "Bug 是程序在向你提问。",
+  "代码之外，才是真正的世界。",
+  "在逻辑里迷路，在现实中醒来。",
+  "程序员的浪漫，是让复杂变简单。",
+  "世界运行在规则之上。",
+  "有些问题，只能用代码回答。",
+
+  // --- 人生、自由与远方 ---
+  "风会记得每一个出发的人。",
+  "人间烟火，最抚凡人心。",
+  "路很长，天总会亮。",
+  "向前走，别回头看风。",
+  "世界很大，别困在原地。",
+  "山高路远，来日方长。",
+  "把日子过成诗。",
+  "慢一点，也没关系。",
+  "时间会奖励坚持的人。",
+  "远方，总比想象更辽阔。",
+
+  // --- 极客感英文 ---
+  "Code the world you want.",
+  "Dream in binary.",
+  "Think deeper, build simpler.",
+  "Everything begins with zero.",
+  "Make it work, make it better.",
+  "Stay curious.",
+  "Build, break, rebuild.",
+  "Think different, code different.",
+
+  // --- 极简哲学 ---
+  "简单，是最高级的复杂。",
+  "万物自有节奏。",
+  "慢慢走，也会到达。",
+  "留白，是另一种表达。",
+  "安静，是一种力量。",
+  "复杂终将归于简单。",
+  "时间，会解释一切。"
+];
 
 const updateTime = () => {
   const now = new Date();
-  currentTime.value = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });
-  currentDate.value = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
+  currentTime.value = now.toLocaleTimeString('zh-CN', {hour12: false, hour: '2-digit', minute: '2-digit'});
+  currentDate.value = now.toLocaleDateString('zh-CN', {month: 'long', day: 'numeric', weekday: 'short'});
 };
 
-const fetchHitokoto = async () => {
+const fetchHitokoto = () => {
   if (isRefreshing.value) return;
   isRefreshing.value = true;
-  try {
-    const res = await fetch('http://192.168.100.1:5000/api/hitokoto');
-    const data = await res.json();
-    hitokoto.value = data.hitokoto;
-  } catch (e) {
-    hitokoto.value = '欲买桂花同载酒，终不似，少年游。';
-  } finally {
-    setTimeout(() => { isRefreshing.value = false; }, 500);
-  }
+  let nextQuote = "";
+  do {
+    nextQuote = localQuotes[Math.floor(Math.random() * localQuotes.length)];
+  } while (nextQuote === hitokoto.value);
+
+  hitokoto.value = nextQuote;
+  setTimeout(() => {
+    isRefreshing.value = false;
+  }, 400);
 };
 
 let timer = null;
@@ -37,17 +83,13 @@ onUnmounted(() => clearInterval(timer));
 
 <template>
   <div class="fixed top-6 left-8 z-10 flex flex-col pointer-events-none items-start">
-
     <div class="flex flex-col drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
-      <span class="text-5xl font-bold text-white tracking-tighter leading-none">
-        {{ currentTime }}
-      </span>
+      <span class="text-5xl font-bold text-white tracking-tighter leading-none">{{ currentTime }}</span>
       <div class="flex items-center gap-2 mt-2">
-    <span class="text-[10px] font-bold text-white tracking-[0.2em] uppercase
-               bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md
-               border border-white/10 shadow-lg">
-      {{ currentDate }}
-    </span>
+        <span
+            class="text-[10px] font-bold text-white tracking-[0.2em] uppercase bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 shadow-lg">
+          {{ currentDate }}
+        </span>
       </div>
     </div>
 
@@ -55,20 +97,20 @@ onUnmounted(() => clearInterval(timer));
         class="mt-3 group cursor-pointer pointer-events-auto select-none transition-transform active:scale-95"
         @click="fetchHitokoto"
     >
-      <div class="inline-flex px-3 py-1.5 bg-black/30 backdrop-blur-md border border-white/5 rounded-xl w-fit min-h-[32px] items-center overflow-hidden transition-all duration-500 ease-in-out hover:bg-black/30 ring-1 ring-white/5">
-
-        <Transition name="quote-fade" mode="out-in">
-          <p :key="hitokoto" class="text-[11px] text-white/70 font-medium italic whitespace-nowrap">
+      <div
+          class="quote-container inline-flex px-4 py-2 bg-black/30 backdrop-blur-md border border-white/5 rounded-2xl w-fit min-h-[36px] items-center overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-black/40 ring-1 ring-white/5">
+        <Transition name="quote-slide" mode="out-in">
+          <p :key="hitokoto" class="text-[12px] text-white/80 font-medium italic whitespace-nowrap tracking-wide">
             {{ hitokoto }}
           </p>
         </Transition>
-
       </div>
 
-      <div class="flex items-center gap-1 mt-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div class="w-1 h-1 rounded-full bg-white/40" :class="{ 'animate-ping': isRefreshing }"></div>
-        <span class="text-[8px] text-white/30 uppercase tracking-tighter">
-          {{ isRefreshing ? '加载中...' : '更新' }}
+      <div
+          class="flex items-center gap-1.5 mt-2 ml-1 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+        <div class="w-1.5 h-1.5 rounded-full bg-white/20" :class="{ 'animate-pulse bg-green-400': isRefreshing }"></div>
+        <span class="text-[8px] text-white/40 uppercase tracking-[0.3em] font-black">
+          {{ isRefreshing ? 'Generating' : 'Next Quote' }}
         </span>
       </div>
     </div>
@@ -76,28 +118,32 @@ onUnmounted(() => clearInterval(timer));
 </template>
 
 <style scoped>
+/* 强制数字等宽，防止时钟抖动 */
 span {
   font-variant-numeric: tabular-nums;
 }
 
-/* 核心动画：背景宽度和高度的变化都会受此影响 */
-.inline-flex {
-  /* 确保宽度变化平滑 */
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+/* 1. 文字切换动画：滑入滑出效果 */
+.quote-slide-enter-active,
+.quote-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.quote-fade-enter-active,
-.quote-fade-leave-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.quote-fade-enter-from {
+.quote-slide-enter-from {
   opacity: 0;
-  transform: translateX(10px); /* 改为横向浮现配合宽度变化更自然 */
+  transform: translateY(8px); /* 从下方滑入 */
+  filter: blur(4px);
 }
 
-.quote-fade-leave-to {
+.quote-slide-leave-to {
   opacity: 0;
-  transform: translateX(-10px);
+  transform: translateY(-8px); /* 向上方滑出 */
+  filter: blur(4px);
+}
+
+/* 2. 背景板宽度动画逻辑 */
+.quote-container {
+  /* 这里的 transition-all 会捕获由文字长度改变引起的 width 变化 */
+  will-change: width;
 }
 </style>

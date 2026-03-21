@@ -1,28 +1,46 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-// 导入更丰富的天气图标
+import { ref, onMounted, watch, inject } from 'vue';
 import {
   Sun, Cloud, CloudRain, CloudLightning, Snowflake,
   CloudFog, Wind, Droplets, CloudDrizzle, CloudSun
 } from 'lucide-vue-next';
 
+// --- 修复标黄报错 ---
+// 使用 as 关键字或显式声明 inject 类型。如果没提供默认值，建议加上 ref(true)
+const isInternal = inject('isInternal', ref(true));
+
 const weatherData = ref({ temp: '--', weather: '...', city: '--', humidity: '--' });
 
 const fetchWeather = async () => {
+  const AMAP_KEY = '9bc21e7e512c45ab7d7c785076427e4c';
   try {
-    const res = await fetch('http://192.168.100.1:5000/api/weather');
-    const data = await res.json();
-    if (!data.error) {
-      weatherData.value = data;
+    // 1. 获取定位（带 Session 缓存）
+    let adcode = sessionStorage.getItem('amap_adcode');
+    if (!adcode) {
+      const ipRes = await fetch(`https://restapi.amap.com/v3/ip?key=${AMAP_KEY}`);
+      const ipData = await ipRes.json();
+      adcode = (ipData.status === "1" && typeof ipData.adcode === 'string') ? ipData.adcode : "130100";
+      sessionStorage.setItem('amap_adcode', adcode);
     }
-  } catch (e) {
-    console.error("天气获取失败");
-  }
+
+    // 2. 获取天气
+    const wRes = await fetch(`https://restapi.amap.com/v3/weather/weatherInfo?key=${AMAP_KEY}&city=${adcode}`);
+    const wData = await wRes.json();
+    if (wData.lives?.length > 0) {
+      const live = wData.lives[0];
+      weatherData.value = { temp: live.temperature, weather: live.weather, city: live.city, humidity: live.humidity };
+    }
+  } catch (e) { console.error("天气获取失败"); }
 };
+
+// 监听网络状态变化
+watch(() => isInternal.value, () => {
+  fetchWeather();
+});
 
 onMounted(() => {
   fetchWeather();
-  setInterval(fetchWeather, 1800000);
+  setInterval(fetchWeather, 1800000); // 30分钟更新一次
 });
 </script>
 
@@ -68,12 +86,6 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="mt-1.5 flex justify-end pr-1 overflow-hidden">
-        <span class="text-[8px] text-white/10 uppercase tracking-[0.3em] font-light group-hover:text-green-500/30 transition-colors">
-          HP-NODE-01
-        </span>
     </div>
   </div>
 </template>
