@@ -1,69 +1,48 @@
 <script setup>
 import {ref, onMounted, provide, onUnmounted} from 'vue';
+import {isInternal, detectNetwork} from './composables/useNetwork';
+import {useServices} from './composables/useServices';
 import SearchBox from './components/SearchBox.vue';
 import {Image as ImageIcon} from 'lucide-vue-next';
 import ServiceCard from "./components/ServiceCard.vue";
+import ServiceEditor from "./components/ServiceEditor.vue";
 import BookmarkManager from "./components/BookmarkManager.vue";
 import NetworkMonitor from "./components/NetworkMonitor.vue";
 import StatusPanel from "./components/StatusPanel.vue";
 import WeatherPanel from "./components/WeatherPanel.vue";
-import {defaultServices} from './data/services';
-import {Download as DownloadIcon} from 'lucide-vue-next'; // 记得导入图标
-import {Eye, EyeOff} from 'lucide-vue-next';
+import {Download as DownloadIcon} from 'lucide-vue-next';
+import {Eye, EyeOff, Plus, Pencil} from 'lucide-vue-next';
 import ImmersionClock from './components/ImmersionClock.vue';
 
-// 1. 响应式变量：默认不再需要 isInternal 状态分发
+const svc = useServices();
+const {
+  services, editorVisible, editingService, editMode,
+  openAdd, openEdit, closeEditor, removeService, upsertService, resetAll,
+} = svc;
+
 const bgImage = ref('');
 const isLoadingWallpaper = ref(false);
 const LOCAL_API_BASE = 'http://192.168.100.1:5000/api/random-wallpaper';
 const PUBLIC_API_BASE = 'https://bing.img.run/rand.php';
-const isImmersive = ref(false); // 沉浸模式状态
+const isImmersive = ref(false);
 
-const isInternal = ref(false); // 默认不显示内网服务，待探测成功后再切入
 provide('isInternal', isInternal);
-
-// 1. 极速探测函数
-const checkNetwork = async () => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 300); // 300ms 快速失败
-
-  try {
-    // 探测你最常开启的那个内网 IP 端口
-    const res = await fetch('http://192.168.100.1:8897', {
-      method: 'HEAD',
-      mode: 'no-cors', // 插件环境下 no-cors 也能判断通不通
-      signal: controller.signal
-    });
-    // 只要没进 catch，说明 IP 是通的
-    isInternal.value = true;
-  } catch (e) {
-    isInternal.value = false;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
 
 const toggleBg = async (isInitial = false) => {
   if (isLoadingWallpaper.value) return;
   isLoadingWallpaper.value = true;
 
   const timestamp = `?t=${Date.now()}`;
-
-  // 核心逻辑：直接根据 App.vue 探测到的 isInternal 决定请求目标
-  // 这样如果 checkNetwork 探测失败，这里会秒切公网，不浪费 1 毫秒
   const targetApi = isInternal.value ? LOCAL_API_BASE : PUBLIC_API_BASE;
   const finalUrl = `${targetApi}${timestamp}`;
 
-  console.log(`[Wallpaper] 探测结果: ${isInternal.value ? '内网' : '公网'}, 正在请求: ${finalUrl}`);
+  console.log(`[Wallpaper] ${isInternal.value ? '内网' : '公网'}: ${finalUrl}`);
 
   try {
-    // 依然使用静默预加载，保证切换时的丝滑感
     await preloadImage(finalUrl);
     bgImage.value = finalUrl;
   } catch (e) {
     console.error("壁纸加载失败:", e);
-
-    // 容错：如果内网 API 报错（比如 Python 后端挂了），尝试切回公网作为备选
     if (isInternal.value) {
       try {
         const fallbackUrl = `${PUBLIC_API_BASE}${timestamp}`;
@@ -127,12 +106,7 @@ const handleKeyDown = (e) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyDown);
-  // 1. 先进行网络探测 (checkNetwork 是 async 的)
-  // 虽然它有 300ms 超时，但通常局域网内几毫秒就出结果了
-  await checkNetwork();
-
-  // 2. 探测结束后，isInternal 已经有了准确的值
-  // 此时再触发 toggleBg，它会直接走向正确的接口
+  await detectNetwork();
   toggleBg(true);
 });
 onUnmounted(() => {
@@ -176,8 +150,21 @@ onUnmounted(() => {
         <TransitionGroup name="stagger" tag="div"
                          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           <template v-if="isInternal">
-            <ServiceCard v-for="(service, index) in defaultServices" :key="service.id" :item="service"
+            <ServiceCard v-for="(service, index) in services" :key="service.id" :item="service"
+                         :editMode="editMode" @edit="openEdit" @delete="removeService"
                          :style="{ '--delay': `${index * 50}ms` }"/>
+            <!-- 编辑模式下的添加按钮 -->
+            <Transition name="stagger">
+              <div v-if="editMode" key="add-btn"
+                   @click="openAdd"
+                   class="flex items-center justify-center gap-2 p-2.5 rounded-xl cursor-pointer
+                          bg-white/20 dark:bg-white/5 backdrop-blur-xl border-2 border-dashed border-white/30 dark:border-white/10
+                          hover:bg-white/30 dark:hover:bg-white/10 hover:border-blue-400/50
+                          transition-all duration-300 active:scale-95">
+                <Plus class="w-5 h-5 text-white/60"/>
+                <span class="text-xs font-bold text-white/60">添加服务</span>
+              </div>
+            </Transition>
           </template>
         </TransitionGroup>
       </div>
@@ -190,13 +177,12 @@ onUnmounted(() => {
     </main>
 
     <div
-        class="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-3 py-2 transition-all duration-700 ease-in-out"
+        class="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-3 py-2 rounded-2xl backdrop-blur-md transition-all duration-700 ease-in-out"
         :class="[
       isImmersive
-        ? 'bg-zinc-900/20 border-transparent backdrop-blur-sm'
-        : 'bg-zinc-900/80 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border'
+        ? 'bg-zinc-900/10 border-transparent shadow-none'
+        : 'bg-zinc-900/70 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border'
     ]"
-        style="border-radius: 1rem;"
     >
       <button @click="toggleImmersive"
               class="flex items-center justify-center w-10 h-8 transition-all active:scale-90"
@@ -230,9 +216,25 @@ onUnmounted(() => {
                   title="Download Wallpaper">
             <DownloadIcon class="w-4 h-4"/>
           </button>
+
+          <div class="w-[1px] h-4 bg-white/5"></div>
+
+          <button @click="editMode = !editMode"
+                  class="flex items-center justify-center w-10 h-8 transition-all active:scale-90"
+                  :class="editMode ? 'text-blue-400 hover:text-blue-300' : 'text-white/40 hover:text-white'"
+                  title="编辑服务">
+            <Pencil class="w-4 h-4"/>
+          </button>
         </div>
       </Transition>
     </div>
+
+    <ServiceEditor
+      :visible="editorVisible"
+      :service="editingService"
+      @close="closeEditor"
+      @save="(data) => { upsertService(data); closeEditor(); }"
+    />
   </div>
 </template>
 
@@ -324,17 +326,6 @@ onUnmounted(() => {
   }
 }
 
-/* 给右下角控制台增加一个微妙的内发光 */
-.fixed.bottom-8 {
-  /* 显式声明高度，防止内容垂直抖动 */
-  height: 48px;
-  /* 只允许背景和边框过渡，不允许 width 过渡（如果子元素定宽，width 就不动了） */
-  transition: background-color 0.3s, border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
-  inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-}
 
 /* 按钮悬停时的文字渐亮 */
 button span {

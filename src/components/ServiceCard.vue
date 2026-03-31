@@ -1,9 +1,11 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 
-const props = defineProps(['item']);
+const props = defineProps(['item', 'editMode']);
+const emit = defineEmits(['edit', 'delete']);
 
 const handleAction = () => {
+  if (props.editMode) return;
   if (props.item.type === 'link') {
     window.open(props.item.url, '_blank');
   } else if (props.item.type === 'copy' || props.item.type === 'info') {
@@ -17,12 +19,9 @@ const handleAction = () => {
   <div
       @click="handleAction"
       class="group relative flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 cursor-pointer
-           /* 基础样式：固定坐标，不使用 translate */
            bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10
-           /* 悬浮反馈：只改变颜色和亮度，不改变位置和模糊强度 */
            hover:bg-white/60 dark:hover:bg-white/10
            hover:border-white/40 dark:hover:border-white/30
-           /* 增加内发光感，而不是外阴影（阴影有时也会触发重绘） */
            hover:shadow-[inset_0_0_12px_rgba(255,255,255,0.2)]
            active:scale-95"
   >
@@ -40,8 +39,37 @@ const handleAction = () => {
     </div>
 
     <div class="flex-shrink-0 ml-1">
-      <div v-if="item.type === 'link'" class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
-      <Icon v-else icon="lucide:copy" class="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div v-if="item.type === 'link' && !editMode" class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+      <Icon v-else-if="!editMode" icon="lucide:copy" class="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
+
+    <!-- 编辑模式按钮 -->
+    <Transition name="fade-fast">
+      <div v-if="editMode" class="absolute -top-1.5 -right-1.5 flex items-center gap-0.5">
+        <button @click.stop="$emit('edit', item)"
+                class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md hover:bg-blue-400 active:scale-90 transition-all">
+          <Icon icon="lucide:pencil" class="w-2.5 h-2.5" />
+        </button>
+        <button @click.stop="$emit('delete', item.id)"
+                class="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-400 active:scale-90 transition-all">
+          <Icon icon="lucide:x" class="w-2.5 h-2.5" />
+        </button>
+      </div>
+    </Transition>
+
+    <!-- 编辑模式下的边框高亮 -->
+    <div v-if="editMode"
+         class="absolute inset-0 rounded-xl border-2 border-blue-400/40 pointer-events-none animate-pulse"></div>
   </div>
 </template>
+
+<style scoped>
+.fade-fast-enter-active,
+.fade-fast-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-fast-enter-from,
+.fade-fast-leave-to {
+  opacity: 0;
+}
+</style>

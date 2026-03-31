@@ -90,7 +90,7 @@ export const defaultServices = [
     {
         id: "12",
         name: 'AdGuard Home',
-        icon: 'mdi:adguard',
+        icon: 'mdi:shield-check',
         url: 'http://192.168.100.1:3000/#',
         type: 'link',
         desc: 'DNS 过滤'

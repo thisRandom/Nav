@@ -1,5 +1,6 @@
 <script setup>
 import {ref, onMounted, onUnmounted, computed, watch} from 'vue';
+import {isInternal} from '../composables/useNetwork';
 import {Icon} from '@iconify/vue';
 import {Search, ChevronDown} from 'lucide-vue-next';
 
@@ -28,9 +29,9 @@ const engines = [
   {name: 'Maven', icon: 'logos:java', url: 'https://pypi.org/search/?q=', placeholder: 'Search Maven...'}
 ];
 
-const currentEngine = ref(engines[0]);
+const currentEngine = ref(engines[1]); // 默认 Bing
 const suggestions = ref([]);
-const selectedIndex = ref(-1); // 用于键盘上下键选择
+const selectedIndex = ref(-1);
 
 // 1. 防抖函数
 let debounceTimer;
@@ -151,29 +152,10 @@ const closeMenu = (e) => {
   }
 };
 
-// 1. 判定函数：快速探测 Google 可达性
-const autoSelectEngine = async () => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1000); // 1.5秒超时，判定为不通
-
-  try {
-    // 探测 Google (使用 favicon 避开跨域且数据量小)
-    const res = await fetch('http://192.168.100.1:8897', {
-      method: 'HEAD',
-      mode: 'no-cors', // 插件环境下 no-cors 也能判断通不通
-      signal: controller.signal
-    });
-
-    // 如果成功，默认选择 Google (索引 0)
-    currentEngine.value = engines[0];
-  } catch (e) {
-    // 如果超时或失败，自动切到 Bing (索引 1)
-    console.log("Google unreachable, switching to Bing.");
-    currentEngine.value = engines[1];
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
+// 根据内网状态自动选择搜索引擎
+watch(isInternal, (internal) => {
+  currentEngine.value = internal ? engines[0] : engines[1]; // 内网可走代理 → Google，否则 → Bing
+}, { immediate: true });
 
 const isUrlMode = computed(() => {
   const urlPattern = /^(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/.*)?$|^(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:\/.*)?$/;
@@ -182,8 +164,6 @@ const isUrlMode = computed(() => {
 
 onMounted(() => {
   window.addEventListener('click', closeMenu);
-  // 核心：启动时自动判定一次环境
-  autoSelectEngine();
   setTimeout(() => {
     if (searchInput.value) {
       searchInput.value.focus();
