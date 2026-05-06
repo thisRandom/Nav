@@ -9,7 +9,6 @@ import ServiceEditor from "./components/ServiceEditor.vue";
 import BookmarkManager from "./components/BookmarkManager.vue";
 import NetworkMonitor from "./components/NetworkMonitor.vue";
 import StatusPanel from "./components/StatusPanel.vue";
-import WeatherPanel from "./components/WeatherPanel.vue";
 import {Download as DownloadIcon} from 'lucide-vue-next';
 import {Eye, EyeOff, Plus, Pencil} from 'lucide-vue-next';
 import ImmersionClock from './components/ImmersionClock.vue';
@@ -22,7 +21,6 @@ const {
 
 const bgImage = ref('');
 const isLoadingWallpaper = ref(false);
-const LOCAL_API_BASE = 'http://192.168.100.1:5000/api/random-wallpaper';
 const PUBLIC_API_BASE = 'https://bing.img.run/rand.php';
 const isImmersive = ref(false);
 
@@ -33,25 +31,16 @@ const toggleBg = async (isInitial = false) => {
   isLoadingWallpaper.value = true;
 
   const timestamp = `?t=${Date.now()}`;
-  const targetApi = isInternal.value ? LOCAL_API_BASE : PUBLIC_API_BASE;
-  const finalUrl = `${targetApi}${timestamp}`;
+  const finalUrl = `${PUBLIC_API_BASE}${timestamp}`;
 
-  console.log(`[Wallpaper] ${isInternal.value ? '内网' : '公网'}: ${finalUrl}`);
+  console.log(`[Wallpaper] 公网: ${finalUrl}`);
 
   try {
     await preloadImage(finalUrl);
     bgImage.value = finalUrl;
   } catch (e) {
     console.error("壁纸加载失败:", e);
-    if (isInternal.value) {
-      try {
-        const fallbackUrl = `${PUBLIC_API_BASE}${timestamp}`;
-        await preloadImage(fallbackUrl);
-        bgImage.value = fallbackUrl;
-      } catch (err) {
-        if (isInitial) bgImage.value = DEFAULT_BG;
-      }
-    } else if (isInitial) {
+    if (isInitial) {
       bgImage.value = DEFAULT_BG;
     }
   } finally {
@@ -127,7 +116,7 @@ onUnmounted(() => {
     <div class="fixed top-0 left-0 w-full z-20 transition-all duration-700 ease-in-out"
          :class="{ 'opacity-0 -translate-y-10 pointer-events-none': isImmersive }">
       <StatusPanel/>
-      <WeatherPanel/>
+
     </div>
 
     <div class="fixed inset-0 z-0">
@@ -230,10 +219,10 @@ onUnmounted(() => {
     </div>
 
     <ServiceEditor
-      :visible="editorVisible"
-      :service="editingService"
-      @close="closeEditor"
-      @save="(data) => { upsertService(data); closeEditor(); }"
+        :visible="editorVisible"
+        :service="editingService"
+        @close="closeEditor"
+        @save="(data) => { upsertService(data); closeEditor(); }"
     />
   </div>
 </template>
