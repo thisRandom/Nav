@@ -1,7 +1,7 @@
 import {ref} from 'vue';
 
-const PROBE_URL = 'http://192.168.10.1';
-const PROBE_TIMEOUT = 500; // ms
+const PROBE_URL = 'http://192.168.10.10/';
+const PROBE_TIMEOUT = 1500;
 
 const isInternal = ref(false);
 let _detecting = null;

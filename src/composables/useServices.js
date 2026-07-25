@@ -21,6 +21,10 @@ export function useServices() {
 
   async function load() {
     try {
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        console.warn('chrome.storage not available, skipping service customizations load');
+        return;
+      }
       const raw = await chrome.storage.local.get(STORAGE_KEY);
       const data = raw[STORAGE_KEY];
       if (!data) return;

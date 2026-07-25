@@ -20,7 +20,7 @@ npm run preview  # Preview production build
 ### Data Flow
 - `src/data/services.js` and `src/data/bookmarks.js` — default service/bookmark definitions
 - `src/composables/useServices.js` — service state management, persists to `chrome.storage.local`
-- `src/composables/useNetwork.js` — detects internal network via probe to `192.168.100.1:8897`
+- `src/composables/useNetwork.js` — detects internal network via probe to `192.168.10.10`
 
 ### Key Composables
 - `useServices()` — manages service cards: CRUD operations, edit mode toggle, persistence
@@ -30,15 +30,13 @@ npm run preview  # Preview production build
 - `ServiceCard` — individual service tile, supports edit/delete in edit mode
 - `ServiceEditor` — modal form for adding/editing services
 - `BookmarkManager` — categorized bookmark grid
-- `ImmersionClock` — fullscreen clock overlay (toggled with Alt+H)
 - `StatusPanel`, `NetworkMonitor`, `SearchBox` — header and utility components
 
 ### Persistence
 Services are persisted via Chrome's `chrome.storage.local` with the key `service_customifications`. The format stores `added`, `edited`, and `deleted` arrays as increments over defaults.
 
 ### Wallpaper
-- Internal network: fetches from `http://192.168.100.1:5000/api/random-wallpaper`
-- External: falls back to `https://bing.img.run/rand.php`
+- Fetches random wallpapers from `https://api.bimg.cc/random` (see `PUBLIC_API_BASE` in `src/App.vue`)
 
 ## Tech Stack
 

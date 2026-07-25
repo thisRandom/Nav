@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, provide, onUnmounted} from 'vue';
+import {ref, onMounted, provide} from 'vue';
 import {isInternal, detectNetwork} from './composables/useNetwork';
 import {useServices} from './composables/useServices';
 import SearchBox from './components/SearchBox.vue';
@@ -10,8 +10,7 @@ import BookmarkManager from "./components/BookmarkManager.vue";
 import NetworkMonitor from "./components/NetworkMonitor.vue";
 import StatusPanel from "./components/StatusPanel.vue";
 import {Download as DownloadIcon} from 'lucide-vue-next';
-import {Eye, EyeOff, Plus, Pencil} from 'lucide-vue-next';
-import ImmersionClock from './components/ImmersionClock.vue';
+import {Plus, Pencil} from 'lucide-vue-next';
 
 const svc = useServices();
 const {
@@ -21,9 +20,7 @@ const {
 
 const bgImage = ref('');
 const isLoadingWallpaper = ref(false);
-const PUBLIC_API_BASE = 'https://bing.img.run/rand.php';
-const isImmersive = ref(false);
-
+const PUBLIC_API_BASE = 'https://api.bimg.cc/random';
 provide('isInternal', isInternal);
 
 const toggleBg = async (isInitial = false) => {
@@ -76,47 +73,19 @@ const preloadImage = (url) => {
     img.onerror = (e) => reject(e);     // 下载失败
   });
 };
-const toggleImmersive = () => {
-  isImmersive.value = !isImmersive.value;
-};
-// 快捷键处理函数
-const handleKeyDown = (e) => {
-  // 逻辑判断：
-  // 1. 必须按下 Alt 键
-  // 2. 键位必须是 'h' 或 'H'
-  // 3. 目标元素不能是输入框 (input, textarea, 或开启了 contenteditable 的元素)
-  const isInput = ['INPUT', 'TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable;
-
-  if (e.altKey && e.key.toLowerCase() === 'h' && !isInput) {
-    e.preventDefault(); // 阻止某些浏览器默认的 Alt 行为
-    toggleImmersive();
-  }
-};
 
 onMounted(async () => {
-  window.addEventListener('keydown', handleKeyDown);
   await detectNetwork();
   toggleBg(true);
-});
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
 
 <template>
   <div
-      class="relative h-screen w-full flex flex-col items-center justify-center px-6 overflow-hidden selection:bg-blue-500/30">
+      class="relative h-screen w-full flex flex-col items-center justify-center px-6 overflow-hidden select-none">
 
-    <Transition name="clock-fade">
-      <div v-if="isImmersive" class="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
-        <ImmersionClock/>
-      </div>
-    </Transition>
-
-    <div class="fixed top-0 left-0 w-full z-20 transition-all duration-700 ease-in-out"
-         :class="{ 'opacity-0 -translate-y-10 pointer-events-none': isImmersive }">
+    <div class="fixed top-0 left-0 w-full z-20">
       <StatusPanel/>
-
     </div>
 
     <div class="fixed inset-0 z-0">
@@ -128,8 +97,7 @@ onUnmounted(() => {
       <div class="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
     </div>
 
-    <main class="z-10 w-full max-w-5xl flex flex-col items-center transform-gpu transition-all duration-700 ease-in-out"
-          :class="{ 'opacity-0 scale-95 translate-y-12 pointer-events-none': isImmersive }">
+    <main class="z-10 w-full max-w-5xl flex flex-col items-center transform-gpu">
 
       <div class="w-full max-w-2xl mb-10">
         <SearchBox/>
@@ -166,56 +134,37 @@ onUnmounted(() => {
     </main>
 
     <div
-        class="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-3 py-2 rounded-2xl backdrop-blur-md transition-all duration-700 ease-in-out"
-        :class="[
-      isImmersive
-        ? 'bg-zinc-900/10 border-transparent shadow-none'
-        : 'bg-zinc-900/70 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border'
-    ]"
-    >
-      <button @click="toggleImmersive"
-              class="flex items-center justify-center w-10 h-8 transition-all active:scale-90"
-              :class="isImmersive ? 'text-white/80 hover:text-white' : 'text-white/40 hover:text-white'">
-        <EyeOff v-if="isImmersive" class="w-4 h-4"/>
-        <Eye v-else class="w-4 h-4"/>
-      </button>
+        class="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-3 py-2 rounded-2xl backdrop-blur-md bg-zinc-900/70 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border">
+      <div class="w-40 flex justify-center">
+        <NetworkMonitor/>
+      </div>
 
-      <Transition name="slide-fade">
-        <div v-if="!isImmersive" class="flex items-center gap-2">
-          <div class="w-[1px] h-4 bg-white/5"></div>
+      <div class="w-[1px] h-4 bg-white/5"></div>
 
-          <div class="w-40 flex justify-center">
-            <NetworkMonitor/>
-          </div>
-
-          <div class="w-[1px] h-4 bg-white/5"></div>
-
-          <button @click="toggleBg" :disabled="isLoadingWallpaper"
-                  class="flex items-center justify-center gap-2 w-[100px] h-8 text-white/40 hover:text-white transition-all active:scale-95 disabled:opacity-50">
+      <button @click="toggleBg" :disabled="isLoadingWallpaper"
+              class="flex items-center justify-center gap-2 w-[100px] h-8 text-white/40 hover:text-white transition-all active:scale-95 disabled:opacity-50">
         <span class="w-4 h-4 flex items-center justify-center">
           <span v-if="isLoadingWallpaper"
                 class="w-full h-full rounded-full border-2 border-white/10 border-t-white animate-spin"></span>
           <ImageIcon v-else class="w-full h-full"/>
         </span>
-            <span class="text-[10px] font-bold uppercase tracking-[0.1em]">Next</span>
-          </button>
+        <span class="text-[10px] font-bold uppercase tracking-[0.1em]">Next</span>
+      </button>
 
-          <button @click="downloadWallpaper"
-                  class="flex items-center justify-center w-10 h-8 text-white/40 hover:text-white transition-all"
-                  title="Download Wallpaper">
-            <DownloadIcon class="w-4 h-4"/>
-          </button>
+      <button @click="downloadWallpaper"
+              class="flex items-center justify-center w-10 h-8 text-white/40 hover:text-white transition-all"
+              title="Download Wallpaper">
+        <DownloadIcon class="w-4 h-4"/>
+      </button>
 
-          <div class="w-[1px] h-4 bg-white/5"></div>
+      <div class="w-[1px] h-4 bg-white/5"></div>
 
-          <button @click="editMode = !editMode"
-                  class="flex items-center justify-center w-10 h-8 transition-all active:scale-90"
-                  :class="editMode ? 'text-blue-400 hover:text-blue-300' : 'text-white/40 hover:text-white'"
-                  title="编辑服务">
-            <Pencil class="w-4 h-4"/>
-          </button>
-        </div>
-      </Transition>
+      <button @click="editMode = !editMode"
+              class="flex items-center justify-center w-10 h-8 transition-all active:scale-90"
+              :class="editMode ? 'text-blue-400 hover:text-blue-300' : 'text-white/40 hover:text-white'"
+              title="编辑服务">
+        <Pencil class="w-4 h-4"/>
+      </button>
     </div>
 
     <ServiceEditor
@@ -328,30 +277,5 @@ button:hover span {
 /* 修改背景图样式 */
 .absolute.inset-0 {
   transition: opacity 1.2s ease, filter 1.2s ease, transform 1.2s ease;
-}
-
-
-/* 沉浸模式下的背景微调 */
-.is-immersive-bg {
-  filter: blur(2px) brightness(1.1); /* 轻微模糊并提亮，增加梦幻感 */
-}
-
-.clock-fade-enter-active, .clock-fade-leave-active {
-  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.clock-fade-enter-from, .clock-fade-leave-to {
-  opacity: 0;
-  transform: scale(1.1) translateY(-20px);
-  filter: blur(10px);
-}
-
-.slide-fade-enter-active, .slide-fade-leave-active {
-  transition: all 0.4s ease;
-}
-
-.slide-fade-enter-from, .slide-fade-leave-to {
-  opacity: 0;
-  transform: translateX(10px);
 }
 </style>

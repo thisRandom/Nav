@@ -20,6 +20,7 @@
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "host_permissions": [
-    "https://suggestion.baidu.com/*"
+    "https://suggestion.baidu.com/*",
+    "https://192.168.10.254:8006/*"
   ]
 }

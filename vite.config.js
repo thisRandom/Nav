@@ -5,10 +5,10 @@ export default defineConfig({
     plugins: [vue()],
     server: {
         proxy: {
-            '/istore-api': {
-                target: 'http://192.168.100.1', // 路由器地址
+            '/api2': {
+                target: 'https://192.168.10.254:8006',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/istore-api/, '')
+                secure: false
             }
         }
     }
