@@ -20,21 +20,33 @@ const {
 
 const bgImage = ref('');
 const isLoadingWallpaper = ref(false);
-const PUBLIC_API_BASE = 'https://api.bimg.cc/random';
+// 微软官方 Bing 壁纸接口：一次返回最近 8 天的壁纸，前端随机挑一张
+// dev 环境走 vite 代理规避 CORS，扩展环境靠 manifest 的 host_permissions
+const BING_API = import.meta.env.DEV
+    ? '/bing/HPImageArchive.aspx?format=js&n=8&mkt=zh-CN'
+    : 'https://cn.bing.com/HPImageArchive.aspx?format=js&n=8&mkt=zh-CN';
+// 网络请求失败时的兜底壁纸（public/wallpapers 下）
+const DEFAULT_BG = `${import.meta.env.BASE_URL}wallpapers/BingWallpaper-1784997955395.jpg`;
 provide('isInternal', isInternal);
+
+const fetchBingWallpaper = async () => {
+  const res = await fetch(`${BING_API}&t=${Date.now()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const images = (await res.json())?.images;
+  if (!images?.length) throw new Error('壁纸接口返回为空');
+  const pick = images[Math.floor(Math.random() * images.length)];
+  return `https://cn.bing.com${pick.url}`;
+};
 
 const toggleBg = async (isInitial = false) => {
   if (isLoadingWallpaper.value) return;
   isLoadingWallpaper.value = true;
 
-  const timestamp = `?t=${Date.now()}`;
-  const finalUrl = `${PUBLIC_API_BASE}${timestamp}`;
-
-  console.log(`[Wallpaper] 公网: ${finalUrl}`);
-
   try {
-    await preloadImage(finalUrl);
-    bgImage.value = finalUrl;
+    const url = await fetchBingWallpaper();
+    console.log(`[Wallpaper] ${url}`);
+    await preloadImage(url);
+    bgImage.value = url;
   } catch (e) {
     console.error("壁纸加载失败:", e);
     if (isInitial) {

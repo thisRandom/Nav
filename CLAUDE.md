@@ -36,7 +36,9 @@ npm run preview  # Preview production build
 Services are persisted via Chrome's `chrome.storage.local` with the key `service_customifications`. The format stores `added`, `edited`, and `deleted` arrays as increments over defaults.
 
 ### Wallpaper
-- Fetches random wallpapers from `https://api.bimg.cc/random` (see `PUBLIC_API_BASE` in `src/App.vue`)
+- Fetches wallpapers from the official Bing API `cn.bing.com/HPImageArchive.aspx` (one request returns the latest 8 daily wallpapers; the client picks one at random) — see `fetchBingWallpaper` in `src/App.vue`
+- Dev mode proxies `/bing` → `cn.bing.com` to avoid CORS; the extension build relies on the `cn.bing.com` entry in `host_permissions`
+- Falls back to `public/wallpapers/BingWallpaper-1784997955395.jpg` (`DEFAULT_BG`) when the request fails
 
 ## Tech Stack
 

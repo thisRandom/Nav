@@ -9,6 +9,11 @@ export default defineConfig({
                 target: 'https://192.168.10.254:8006',
                 changeOrigin: true,
                 secure: false
+            },
+            '/bing': {
+                target: 'https://cn.bing.com',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/bing/, '')
             }
         }
     }

@@ -21,6 +21,7 @@
   },
   "host_permissions": [
     "https://suggestion.baidu.com/*",
-    "https://192.168.10.254:8006/*"
+    "https://192.168.10.254:8006/*",
+    "https://cn.bing.com/*"
   ]
 }
