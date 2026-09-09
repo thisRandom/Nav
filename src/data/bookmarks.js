@@ -32,6 +32,16 @@ export const defaultBookmarks = {
             icon: "simple-icons:alibabacloud"
         }
     ],
+    "工具": [
+        {name: "必应站长", url: "https://www.bing.com/webmasters", icon: "tabler:brand-bing"},
+        {name: "Tempo", url: "https://xtr.lantech.top/", icon: "mdi:tempo"},
+        {name: "Gitea", url: "https://git.lantech.top/", icon: "simple-icons:gitea"},
+        {
+            name: "必应翻译",
+            url: "https://cn.bing.com/search?q=%E7%BF%BB%E8%AF%91",
+            icon: "ri:translate-2"
+        }
+    ],
     "快捷链接": [
         {name: "Lantech", url: "https://lantech.top", icon: "ph:house-line-duotone"},
         {name: "Iconify", url: "https://www.sterblich.fun/", icon: "ph:lightbulb-duotone"},
