@@ -106,7 +106,7 @@ onMounted(async () => {
              class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-[1800ms]"
              :style="{ backgroundImage: `url(${bgImage})` }"></div>
       </Transition>
-      <div class="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
+      <div class="absolute inset-0 bg-black/20 dark:bg-black/30"></div>
     </div>
 
     <main class="z-10 w-full max-w-5xl flex flex-col items-center transform-gpu">

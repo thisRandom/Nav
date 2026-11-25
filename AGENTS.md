@@ -20,7 +20,7 @@ npm run preview  # Preview production build
 ### Data Flow
 - `src/data/services.js` and `src/data/bookmarks.js` — default service/bookmark definitions
 - `src/composables/useServices.js` — service state management, persists to `chrome.storage.local`
-- `src/composables/useNetwork.js` — detects internal network via probe to `192.168.10.10`
+- `src/composables/useNetwork.js` — detects internal network via probe to `10.1.1.1`
 
 ### Key Composables
 - `useServices()` — manages service cards: CRUD operations, edit mode toggle, persistence

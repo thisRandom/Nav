@@ -19,21 +19,21 @@ const handleAction = () => {
   <div
       @click="handleAction"
       class="group relative flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 cursor-pointer
-           bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10
-           hover:bg-white/60 dark:hover:bg-white/10
-           hover:border-white/40 dark:hover:border-white/30
+           bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border border-white/20 dark:border-white/10
+           hover:bg-white/60 dark:hover:bg-zinc-900/55
+           hover:border-white/40 dark:hover:border-white/20
            hover:shadow-[inset_0_0_12px_rgba(255,255,255,0.2)]
            active:scale-95"
   >
-    <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 dark:bg-black/20 shadow-inner">
-      <Icon :icon="item.icon" class="w-6 h-6" />
+    <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-white/50 dark:bg-white/10 shadow-inner">
+      <Icon :icon="item.icon" class="w-6 h-6 text-zinc-800 dark:text-zinc-100" />
     </div>
 
     <div class="flex-1 min-w-0">
       <h3 class="text-xs font-bold text-zinc-800 dark:text-zinc-100 truncate leading-tight">
         {{ item.name }}
       </h3>
-      <p class="text-[10px] text-zinc-600 dark:text-zinc-300 truncate mt-0.5 font-medium">
+      <p class="text-[10px] text-zinc-600 dark:text-zinc-200 truncate mt-0.5 font-medium">
         {{ item.type === 'info' || item.type === 'copy' ? item.value : item.desc }}
       </p>
     </div>

@@ -3,12 +3,8 @@ export const defaultBookmarks = {
     "AI": [
         {name: "Gemini", url: "https://gemini.google.com", icon: "ri:shining-2-fill"},
         {name: "ChatGPT", url: "https://chat.openai.com", icon: "simple-icons:openai"},
-        {
-            name: "Copilot",
-            url: "https://www.bing.com/chat?q=Microsoft+Copilot&FORM=hpcodx",
-            icon: "logos:github-copilot"
-        },
         {name: "DeepSeek", url: "https://www.deepseek.com/", icon: "bxl:deepseek"},
+        {name: "Muse", url: "https://muse.ai/", icon: "mdi:play-box"},
     ],
     "购物": [
         {name: "京东", url: "https://www.jd.com", icon: "ri:shopping-bag-3-fill"},
@@ -34,7 +30,7 @@ export const defaultBookmarks = {
     ],
     "工具": [
         {name: "必应站长", url: "https://www.bing.com/webmasters", icon: "tabler:brand-bing"},
-        {name: "Tempo", url: "https://xtr.lantech.top/", icon: "mdi:tempo"},
+        {name: "博客后台", url: "https://admin.lantech.top/", icon: "mdi:file-document-edit-outline"},
         {name: "Gitea", url: "https://git.lantech.top/", icon: "simple-icons:gitea"},
         {
             name: "必应翻译",
